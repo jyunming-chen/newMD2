@@ -32,14 +32,14 @@
 	<body>
 		<div id="info">
 			<a href="http://threejs.org" target="_blank" rel="noopener">three.js</a> - MD2 Loader -
-			Ogro by <a href="http://planetquake.gamespy.com/View.php?view=Quake2.Detail&id=556">Magarnigal</a><br />
+			<br />
 			use arrows to control characters, mouse for camera
 			
 			<br>
 			<p id='msg'></p>
 		</div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/94/three.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/107/three.min.js"></script>
 <script src="https://threejs.org/examples/js/controls/OrbitControls.js"></script>
 <script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
 
@@ -134,7 +134,7 @@
 
 				scene.add( ground );
 				
-				let axes = new THREE.AxisHelper (100)
+				let axes = new THREE.AxesHelper (100)
 				scene.add (axes)
 
 				// RENDERER
@@ -161,7 +161,8 @@
 
 				cameraControls = new THREE.OrbitControls( camera, renderer.domElement );
 				cameraControls.target.set( 0, 50, 0 );
-				cameraControls.update();
+			//	cameraControls.update();
+				cameraControls.enableKeys = false;
 
 				/////////////////////////////////////////////////////////////////////////////
 				// CHARACTER: yoshi
@@ -190,7 +191,7 @@
 				};
 
 				yoshi = new THREE.MD2CharacterComplex();
-				yoshi.scale = 3;
+				yoshi.scale = 1;
 				yoshi.controls = controls;
 				
 				yoshi.onLoadComplete = function () {

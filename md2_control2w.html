@@ -32,24 +32,23 @@
 	<body>
 		<div id="info">
 			<a href="http://threejs.org" target="_blank" rel="noopener">three.js</a> - MD2 Loader -
-			Ogro by <a href="http://planetquake.gamespy.com/View.php?view=Quake2.Detail&id=556">Magarnigal</a><br />
+			<br />
 			use arrows to control characters, mouse for camera
+			
+			<br>
+			<p id='msg'></p>
 		</div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/107/three.min.js"></script>
 <script src="https://threejs.org/examples/js/controls/OrbitControls.js"></script>
+<script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
 
 		<script src='js/MD2Loader.js'></script>
 		<script src='js/MorphBlendMesh.js'></script>
 		<script src='js/MD2CharacterComplex.js'></script>
 		<script src='js/Gyroscope.js'></script>
-<!--
-		<script src='js/Detector.js'></script>
-		<script src='js/libs/stats.min.js'></script>
--->
 		<script>
 
-		//	if ( ! Detector.webgl ) Detector.addGetWebGLMessage();
 
 			var SCREEN_WIDTH = window.innerWidth;
 			var SCREEN_HEIGHT = window.innerHeight;
@@ -57,9 +56,9 @@
 			var container, stats;
 			var camera, scene, renderer;
 
-			var characters = [];
-			var nCharacters = 0;
-
+			var yoshi;
+			var light;
+			
 			var cameraControls;
 
 			var controls = {
@@ -98,7 +97,7 @@
 
 				scene.add( new THREE.AmbientLight( 0x222222 ) );
 
-				var light = new THREE.DirectionalLight( 0xffffff, 2.25 );
+				light = new THREE.DirectionalLight( 0xffffff, 2.25 );
 				light.position.set( 200, 450, 500 );
 
 				light.castShadow = true;
@@ -115,12 +114,13 @@
 				light.shadow.camera.bottom = -350;
 
 				scene.add( light );
-				// scene.add( new THREE.CameraHelper( light.shadow.camera ) );
+				scene.add( new THREE.CameraHelper( light.shadow.camera ) );
 
 
 				//  GROUND
 
-				var gt = new THREE.TextureLoader().load( "grasslight-big.jpg" );
+				//var gt = new THREE.TextureLoader().load( "grasslight-big.jpg" );
+				var gt = new THREE.TextureLoader().load( "https://i.imgur.com/p8CRm9W.jpg");
 				var gg = new THREE.PlaneBufferGeometry( 16000, 16000 );
 				var gm = new THREE.MeshPhongMaterial( { color: 0xffffff, map: gt } );
 
@@ -133,6 +133,9 @@
 				ground.receiveShadow = true;
 
 				scene.add( ground );
+				
+				let axes = new THREE.AxesHelper (100)
+				scene.add (axes)
 
 				// RENDERER
 
@@ -141,19 +144,13 @@
 				renderer.setSize( SCREEN_WIDTH, SCREEN_HEIGHT );
 				container.appendChild( renderer.domElement );
 
-				//
-
 				renderer.gammaInput = true;
 				renderer.gammaOutput = true;
 
 				renderer.shadowMap.enabled = true;
 				renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
-				// STATS
-
-		//		stats = new Stats();
-		//		container.appendChild( stats.dom );
-
+	
 				// EVENTS
 
 				window.addEventListener( 'resize', onWindowResize, false );
@@ -164,41 +161,19 @@
 
 				cameraControls = new THREE.OrbitControls( camera, renderer.domElement );
 				cameraControls.target.set( 0, 50, 0 );
-				cameraControls.update();
+			//	cameraControls.update();
+				cameraControls.enableKeys = false;
 
-				// CHARACTER
-/*
-				var configOgro = {
+				/////////////////////////////////////////////////////////////////////////////
+				// CHARACTER: yoshi
+
+				var configYoshi = {
 
 					baseUrl: "md2models/ogro/",
 
 					body: "ogro.md2",
-					skins: [ "grok.jpg", "ogrobase.png", "arboshak.png", "ctf_r.png", "ctf_b.png", "darkam.png", "freedom.png",
-							 "gib.png", "gordogh.png", "igdosh.png", "khorne.png", "nabogro.png",
-							 "sharokh.png" ],
-					weapons:  [ [ "weapon.md2", "weapon.jpg" ] ],
-					animations: {
-						move: "run",
-						idle: "stand",
-						jump: "jump",
-						attack: "attack",
-						crouchMove: "cwalk",
-						crouchIdle: "cstand",
-						crouchAttach: "crattack"
-					},
-
-					walkSpeed: 350,
-					crouchSpeed: 175
-
-				};
-*/
-				var configOgro = {
-
-					baseUrl: "md2models/yoshi/",
-
-					body: "tris.md2",
-					skins: [ "yoshi.png" ],
-					weapons:  [  ],
+					skins: [ "ogrobase.png", "freedom.png" ],
+					weapons:  [ ["weapon.md2", "weapon.jpg"]],
 
 					animations: {
 						move: "run",
@@ -210,66 +185,39 @@
 						crouchAttach: "crattack"
 					},
 
-					walkSpeed: 350,
+					walkSpeed: 350, //translation speed
 					crouchSpeed: 175
 
 				};
 
-				var nRows = 1;
-				var nSkins = configOgro.skins.length;
+				yoshi = new THREE.MD2CharacterComplex();
+				yoshi.scale = 5;
+				yoshi.controls = controls;
+				
+				yoshi.onLoadComplete = function () {
+				
+					// cast and receive shadows
+					yoshi.enableShadows( true );
 
-				nCharacters = nSkins * nRows;
+					yoshi.setWeapon( 0 );
+					yoshi.setSkin( 0 );
 
-				for ( var i = 0; i < nCharacters; i ++ ) {
+					yoshi.root.position.x = 0;
+					yoshi.root.position.z = 0;
 
-					var character = new THREE.MD2CharacterComplex();
-					character.scale = 3;
-					character.controls = controls;
-					characters.push( character );
-
-				}
-
-				var baseCharacter = new THREE.MD2CharacterComplex();
-				baseCharacter.scale = 3;
-
-				baseCharacter.onLoadComplete = function () {
-
-					var k = 0;
-
-					for ( var j = 0; j < nRows; j ++ ) {
-
-						for ( var i = 0; i < nSkins; i ++ ) {
-
-							var cloneCharacter = characters[ k ];
-
-							cloneCharacter.shareParts( baseCharacter );
-
-							// cast and receive shadows
-							cloneCharacter.enableShadows( true );
-
-							cloneCharacter.setWeapon( 0 );
-							cloneCharacter.setSkin( i );
-
-							cloneCharacter.root.position.x = ( i - nSkins/2 ) * 150;
-							cloneCharacter.root.position.z = j * 250;
-
-							scene.add( cloneCharacter.root );
-
-							k ++;
-
-						}
-
-					}
-
-					var gyro = new THREE.Gyroscope();  //??
+					scene.add( yoshi.root );
+							
+					//light.target = yoshi.root;
+					
+					var gyro = new THREE.Gyroscope();  
 					gyro.add( camera );
+					
 					gyro.add( light, light.target );
-
-					characters[ Math.floor( nSkins / 2 ) ].root.add( gyro );
-
-				};
-
-				baseCharacter.loadParts( configOgro );
+					
+					yoshi.root.add( gyro );							
+				
+				}
+				yoshi.loadParts( configYoshi );
 
 			}
 
@@ -346,20 +294,14 @@
 				requestAnimationFrame( animate );
 				render();
 
-		//		stats.update();
-
 			}
 
 			function render() {
 
 				var delta = clock.getDelta();
-
-				for ( var i = 0; i < nCharacters; i ++ ) {
-
-					characters[ i ].update( delta );
-
+				if (yoshi) {
+					yoshi.update (delta)
 				}
-
 				renderer.render( scene, camera );
 
 			}
